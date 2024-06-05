@@ -7,14 +7,14 @@ import 'codemirror/addon/edit/closetag';
 import 'codemirror/addon/edit/closebrackets';
 import ACTIONS from '../Actions';
 
-const Editor = ({socketRef , roomId}) => {
+const Editor = ({socketRef , roomId, onCodeChange}) => {
 
     const editorRef = useRef(null);
 
     useEffect(() => {
 
         if (!editorRef.current) {
-            editorRef.current  =  Codemirror.fromTextArea(
+            const editor  =  Codemirror.fromTextArea(
                 document.getElementById('realtimeEditor'),
                 {
                     mode: { name: 'javascript', json: true },
@@ -25,6 +25,8 @@ const Editor = ({socketRef , roomId}) => {
                 }
             );
 
+            editorRef.current = editor
+
 
             editorRef.current.on('change', (instance, changes) => {
 
@@ -32,6 +34,8 @@ const Editor = ({socketRef , roomId}) => {
 
                 const { origin } = changes;
                 const code = instance.getValue();
+
+                onCodeChange(code);
                 
                 if(origin !== 'setValue'){
 
@@ -47,41 +51,26 @@ const Editor = ({socketRef , roomId}) => {
                  // console.log(code);
 
             })
-
-
-
         }
 
-        
+    }, []); 
 
+  // data receive from server
 
-    }, [ socketRef , roomId ]); 
-
-
-    useEffect(() => {
-
-      
-
-        if (socketRef.current) {
-           
-            socketRef.current.on(ACTIONS.CODE_CHANGE, ({ code }) => {    
-
-                console.log(code);
-
-                if (code !== null) {
-                    editorRef.current.setValue(code);
-                }
-            });   
+  useEffect(() => {
+    if (socketRef.current) {
+      socketRef.current.on(ACTIONS.CODE_CHANGE, ({ code }) => {
+        if (code !== null) {
+          editorRef.current.setValue(code);
         }
+      });
 
-        
-    }, [socketRef]);
-
-
-
-
-
+      return () => {
+        socketRef.current.off(ACTIONS.CODE_CHANGE);
+      };
+    }
   
+  }, [socketRef.current]);
 
     return <textarea id="realtimeEditor"></textarea>
 }
