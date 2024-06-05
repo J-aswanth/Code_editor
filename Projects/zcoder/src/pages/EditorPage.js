@@ -11,23 +11,28 @@ import { Navigate, useLocation, useNavigate , useParams} from 'react-router-dom'
 
 const EditorPage = () => {
 
+    const [clients,setClients] = useState([]);
+    const codeRef = useRef(null);
 
-    const socketRef = useRef(null);
+
+   
     const location = useLocation();
     const reactNavigator = useNavigate();
     const { roomId } = useParams();
 
-    const [clients,setClients] = useState([]);
+    const socketRef = useRef(null);
+
 
     useEffect(() => {
 
         const init = async () => {
+            
        
-
+            //console.log('njj');
             
             socketRef.current = await initSocket();
     
-            socketRef.current.on('connect_error', handleErrors);
+            socketRef.current.on('connect_error',  handleErrors);
             socketRef.current.on('connect_fail', handleErrors);
     
             function handleErrors(err) {
@@ -40,10 +45,6 @@ const EditorPage = () => {
                 roomId,
                 username: location.state?.username,
             });
-
-
-
-
 
             // Listnening for joined event i.e... if any user joined with the respective room id
 
@@ -58,6 +59,13 @@ const EditorPage = () => {
                         }
 
                         setClients(clients);
+
+                         // also send the code to sync
+                         
+                        socketRef.current.emit(ACTIONS.SYNC_CODE, {
+                         code: codeRef.current,
+                          socketId,
+                       });
                  }
         
             );
@@ -72,29 +80,52 @@ const EditorPage = () => {
 
                 setClients((prev) =>{
                     return prev.filter( client => client.socketId !== socketId );   // this removes the username in the connected section 
-                }) 
-            })
-
-
+                });
+            });
        
         };
 
        init();
 
-           // to clear the liseners which we used in current.on 
+        // to clear the liseners which we used in current.on 
 
-    return () => {
-        if (socketRef.current) {
-            socketRef.current.disconnect();
+        return () => {
+
+            if (socketRef.current) {
+            socketRef.current && socketRef.current.disconnect();
             socketRef.current.off(ACTIONS.JOINED);
             socketRef.current.off(ACTIONS.DISCONNECTED);
-        }
-     };
-      
+            socketRef.current = null;
+            }
+        };
+
+
    }, []);
     
 
-    
+   // function to copy roomID
+
+    async function copyRoomId(){
+        try{
+            
+            await navigator.clipboard.writeText(roomId);
+            toast.success('Room ID has been copied to your clipboard');
+
+        }catch(err){
+            toast.error('Couldnot copy Room ID');
+            console.log(err);
+        }
+    }
+
+
+
+    // function to leave room
+
+    function leaveRoom(){
+        reactNavigator('/');
+    }
+
+
 
     if(!location.state){
        return  <Navigate to="/" />
@@ -120,11 +151,17 @@ const EditorPage = () => {
                     }
                 </div>
             </div>
-        <button className='btn copyBtn'>Copy ROOM ID</button>
-        <button className='btn leaveBtn'>Leave Room</button>
+        <button className='btn copyBtn' onClick={copyRoomId}>Copy ROOM ID</button>
+        <button className='btn leaveBtn' onClick={leaveRoom}>Leave Room</button>
         </div>
         <div className='editorWrap'>
-            <Editor socketRef = {socketRef} rommId = {roomId} />
+        <Editor
+            socketRef={socketRef}
+            roomId={roomId}
+            onCodeChange={(code) => {
+              codeRef.current = code;
+            }}
+          />
         </div>
 
     </div>
