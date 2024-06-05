@@ -8,13 +8,12 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 
-
 const userSocketMap = {};  // this is to store username - socketid in a map 
 
 
 // the below function is to get all the connected usernames & their socketids
 
-function getAllConnectedClients(roomId){                    
+const getAllConnectedClients = (roomId) => {                    
    return Array.from(io.sockets.adapter.rooms.get(roomId) || []).map(
     (socketId) => {
         return {
@@ -22,9 +21,11 @@ function getAllConnectedClients(roomId){
             username : userSocketMap[socketId],
         }
    });
-}
+};
 
-io.on('connection', (socket) => {
+
+io.on("connection", (socket) => {
+    
     console.log('socket connected', socket.id);
 
     socket.on(ACTIONS.JOIN, ({ roomId, username }) => {
@@ -37,25 +38,25 @@ io.on('connection', (socket) => {
                 clients,
                 username,
                 socketId: socket.id,
-            })
-        })
-    })
+            });
+        });
+    });
 
 
 
 
-    // to copy the code written in editor
+    // to sync the code written in editor
 
-    socket.on(ACTIONS.CODE_CHANGE, ({roomId, code}) =>{
-        
-        // console.log('recieving', code);
-
-        socket.in(roomId).emit(ACTIONS.CODE_CHANGE , {code});
-
-    })
+    socket.on(ACTIONS.CODE_CHANGE, ({ roomId, code }) => {
+        socket.in(roomId).emit(ACTIONS.CODE_CHANGE, { code });
+    });
 
 
-
+    // when new user join the room all the code which are there are also shows on that persons editor
+    
+    socket.on(ACTIONS.SYNC_CODE, ({ socketId, code }) => {
+        io.to(socketId).emit(ACTIONS.CODE_CHANGE, { code });
+    });
 
  
     // For disconnect of users - if any user closes the tab / opens another tab
@@ -68,16 +69,21 @@ io.on('connection', (socket) => {
             socket.in(roomId).emit(ACTIONS.DISCONNECTED, {
                 socketId: socket.id,
                 username: userSocketMap[socket.id],
-            })
+            });
 
-        })
+        });
 
         delete userSocketMap[socket.id];
         socket.leave();
-    })
+    });
 
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 server.listen(PORT, () => console.log(`Listening on port ${PORT}`));
+ 
+
+
+
+ 
