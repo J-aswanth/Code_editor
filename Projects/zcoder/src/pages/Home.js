@@ -19,25 +19,50 @@ const Home = () => {
         toast.success('Created a new room');
     };
 
-    const joinRoom = () => {
+    const joinRoom1 = () => {
 
         if (!roomId || !username) {
             toast.error('ROOM ID & username is required');
             return;
         }
+        
+      
 
         // Redirect
 
         navigate(`/editor/${roomId}`, {
             state: {
                 username,
+               
             },
         });
     };
 
+    const joinRoom2 = () => {
+
+        if (!roomId || !username) {
+            toast.error('ROOM ID & username is required');
+            return;
+        }
+
+       
+
+        // Redirect
+
+        navigate(`/noteseditor/${roomId}`, {
+            state: {
+                username,
+                
+            },
+        });
+    };
+
+
+
     const handleInputEnter = (e) => {
         if (e.code === 'Enter') {
-            joinRoom();
+            joinRoom1();
+            joinRoom2();
         }
     };
 
@@ -45,6 +70,7 @@ const Home = () => {
     return (
         <div className="homePageWrapper">
             <div className="formWrapper">
+                <h2 className="mainLabel">Welcome to WE-COLLAB SPACE</h2>
                 <h4 className="mainLabel">Paste invitation ROOM ID</h4>
                 <div className="inputGroup">
                     <input
@@ -63,8 +89,11 @@ const Home = () => {
                         value={username}
                         onKeyUp={handleInputEnter}
                     />
-                    <button className="btn joinBtn" onClick={joinRoom}>
-                        Join
+                    <button className="btn joinBtn" onClick={joinRoom1}>
+                        Join - CodeEditor
+                    </button>
+                    <button className="btn joinBtn" onClick={joinRoom2}>
+                        Join - NotesEditor
                     </button>
                     <span className="createInfo">
                         If you don't have an invite then create &nbsp;
@@ -76,7 +105,7 @@ const Home = () => {
             </div>
             <footer>
                 <h4>
-                    Built with MRJN;
+                    Built by MJ & RM;
                 </h4>
             </footer>
         </div>
