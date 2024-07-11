@@ -77,9 +77,36 @@ io.on("connection", (socket) => {
         socket.leave();
     });
 
+
+   // for notes editor 
+
+   socket.on('init', async () => {
+        try {
+          const doc = await Document.findOne();
+          socket.emit('init', { content: doc ? doc.content : '' });
+        } catch (error) {
+          console.error('Error initializing document:', error);
+        }
+      });
+    
+      socket.on('update', async ({ content }) => {
+        try {
+          let doc = await Document.findOne();
+          if (!doc) {
+            doc = new Document({ content });
+          } else {
+            doc.content = content;
+          }
+          await doc.save();
+          io.emit('update', { content });
+        } catch (error) {
+          console.error('Error updating document:', error);
+        }
+      });
+
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 server.listen(PORT, () => console.log(`Listening on port ${PORT}`));
  
